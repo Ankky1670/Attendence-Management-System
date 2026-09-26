@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vidyalaya AMS — Attendance Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#161B2E; --ink-soft:#4A5170; --paper:#F1F0EC; --panel:#FFFFFF;
+    --line:#DEDCD3; --teal:#1F6F63; --teal-deep:#154A42; --clay:#B5502C;
+    --amber:#C98A3A; --present:#2C7A4B; --present-bg:#E4F1E7;
+    --absent:#B5502C; --absent-bg:#F6E7DF; --radius:10px;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#EDEBE3; --ink-soft:#B7B9C9; --paper:#12131C; --panel:#1B1D2B;
+      --line:#2E3040; --present-bg:#173322; --absent-bg:#3A2018;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#EDEBE3; --ink-soft:#B7B9C9; --paper:#12131C; --panel:#1B1D2B;
+    --line:#2E3040; --present-bg:#173322; --absent-bg:#3A2018;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:env(safe-area-inset-top,0px)}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;min-height:100%;}
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;margin:0;letter-spacing:-.01em}
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit;font-size:14px}
+  ::selection{background:var(--teal);color:#fff}
+
+  /* ---- Login ---- */
+  #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;}
+  .login-card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:36px 32px;}
+  .brand{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+  .brand-mark{width:34px;height:34px;border-radius:8px;background:linear-gradient(155deg,var(--teal),var(--teal-deep));flex:none;display:grid;place-items:center;color:#fff;font-family:'Fraunces',serif;font-weight:600;font-size:17px}
+  .brand h1{font-size:22px}
+  .tagline{color:var(--ink-soft);font-size:13.5px;margin:2px 0 26px;line-height:1.5}
+  .role-tabs{display:flex;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:4px;margin-bottom:20px}
+  .role-tabs button{flex:1;border:none;background:transparent;padding:9px 4px;border-radius:6px;font-size:13.5px;font-weight:600;color:var(--ink-soft)}
+  .role-tabs button.active{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;font-weight:500}
+  .field input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);outline:none}
+  .field input:focus{border-color:var(--teal)}
+  .btn-primary{width:100%;padding:11px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:600;font-size:14.5px;margin-top:6px}
+  .btn-primary:hover{background:var(--teal-deep)}
+  .hint{margin-top:18px;padding:12px 14px;background:var(--paper);border:1px dashed var(--line);border-radius:8px;font-size:12px;color:var(--ink-soft);line-height:1.7}
+  .hint b{color:var(--ink)}
+  .err{color:var(--clay);font-size:12.5px;margin-top:8px;display:none}
+
+  /* ---- App shell ---- */
+  #app{display:none;min-height:100vh;grid-template-columns:220px 1fr}
+  #app.on{display:grid}
+  aside{background:var(--ink);color:#E8E7DE;padding:22px 16px;display:flex;flex-direction:column;padding-top:calc(22px + env(safe-area-inset-top,0px))}
+  aside .brand{color:#fff;margin-bottom:24px;padding:0 6px}
+  aside .brand h1{font-size:17px;color:#fff}
+  nav.side{display:flex;flex-direction:column;gap:2px;flex:1}
+  nav.side button{text-align:left;background:transparent;border:none;color:#B9B8AE;padding:10px 12px;border-radius:8px;font-size:13.5px;font-weight:500}
+  nav.side button.active{background:rgba(255,255,255,.1);color:#fff}
+  nav.side button:hover{color:#fff}
+  .who{padding:12px;border-top:1px solid rgba(255,255,255,.12);margin-top:8px}
+  .who .name{font-size:13px;color:#fff;font-weight:600}
+  .who .role{font-size:11.5px;color:#9B9A90;text-transform:capitalize}
+  .logout{margin-top:10px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#E8E7DE;padding:8px 10px;border-radius:7px;font-size:12.5px;width:100%}
+
+  main{padding:28px 32px 60px;padding-top:calc(28px + env(safe-area-inset-top,0px));max-width:1080px;overflow-x:hidden}
+  .pagehead{margin-bottom:22px}
+  .pagehead h2{font-size:24px}
+  .pagehead p{color:var(--ink-soft);font-size:13.5px;margin-top:4px}
+
+  .grid-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .stat .num{font-family:'Fraunces',serif;font-size:28px;font-weight:600}
+  .stat .lbl{font-size:12px;color:var(--ink-soft);margin-top:2px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px}
+  .card h3{font-size:15.5px;margin-bottom:14px}
+  .row-form{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+  .row-form input,.row-form select{padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);flex:1;min-width:130px}
+  .btn{padding:9px 16px;border:none;border-radius:7px;background:var(--teal);color:#fff;font-weight:600;font-size:13.5px;white-space:nowrap}
+  .btn:hover{background:var(--teal-deep)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .btn.danger{background:transparent;color:var(--clay);border:1px solid var(--absent-bg)}
+  .btn.small{padding:6px 11px;font-size:12.5px}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;color:var(--ink-soft);font-weight:500;font-size:11.5px;padding:0 10px 8px;border-bottom:1px solid var(--line)}
+  td{padding:10px 10px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  .tbl-wrap{overflow-x:auto}
+  .muted{color:var(--ink-soft)}
+
+  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+  .pill.present{background:var(--present-bg);color:var(--present)}
+  .pill.absent{background:var(--absent-bg);color:var(--absent)}
+
+  .mark-row{display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid var(--line)}
+  .mark-row:last-child{border-bottom:none}
+  .mark-row .stu{font-size:14px}
+  .mark-row .roll{color:var(--ink-soft);font-size:12px}
+  .toggle{display:flex;border:1px solid var(--line);border-radius:20px;overflow:hidden}
+  .toggle button{border:none;background:transparent;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+  .toggle button.p-on{background:var(--present-bg);color:var(--present)}
+  .toggle button.a-on{background:var(--absent-bg);color:var(--absent)}
+
+  .bar-outer{background:var(--paper);border:1px solid var(--line);border-radius:6px;height:8px;overflow:hidden}
+  .bar-inner{height:100%;background:var(--teal)}
+  .bar-inner.low{background:var(--clay)}
+  .subj-line{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .subj-line:last-child{border-bottom:none}
+  .subj-line .sname{width:150px;font-size:13.5px;flex:none}
+  .subj-line .pct{width:52px;text-align:right;font-weight:700;font-size:13.5px;flex:none}
+
+  .empty{padding:30px 10px;text-align:center;color:var(--ink-soft);font-size:13.5px}
+  select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:760px){
+    #app.on{display:block}
+    aside{position:sticky;top:0;z-index:5;flex-direction:row;align-items:center;gap:10px;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px))}
+    aside .brand{margin:0}
+    nav.side{flex-direction:row;overflow-x:auto;flex:1}
+    .who,.logout{display:none}
+    main{padding:20px 16px 50px;padding-top:calc(20px + env(safe-area-inset-top,0px))}
+    .two-col{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="login-card">
+    <div class="brand"><div class="brand-mark">V</div><h1>Vidyalaya AMS</h1></div>
+    <p class="tagline">Attendance recorded the moment it's taken — no registers, no end-of-semester surprises.</p>
+    <div class="role-tabs" id="roleTabs">
+      <button class="active" data-role="admin">Admin</button>
+      <button data-role="faculty">Faculty</button>
+      <button data-role="student">Student</button>
+    </div>
+    <div class="field"><label>Username</label><input id="userIn" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input id="passIn" type="password" autocomplete="current-password"></div>
+    <button class="btn-primary" id="loginBtn">Log in</button>
+    <div class="err" id="loginErr">That username or password doesn't match a record. Check the demo credentials below.</div>
+    <div class="hint" id="loginHint"></div>
+  </div>
+</div>
+
+<div id="app">
+  <aside>
+    <div class="brand"><div class="brand-mark">V</div><h1>Vidyalaya</h1></div>
+    <nav class="side" id="sideNav"></nav>
+    <div class="who"><div class="name" id="whoName"></div><div class="role" id="whoRole"></div></div>
+    <button class="logout" id="logoutBtn">Log out</button>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<script>
+/* ---------------- Data layer ---------------- */
+const KEY='vidyalaya_ams_v1';
+
+function seed(){
+  return {
+    students:[
+      {id:'S1',name:'Aisha Khan',roll:'21CS001'},
+      {id:'S2',name:'Rohit Verma',roll:'21CS002'},
+      {id:'S3',name:'Meera Iyer',roll:'21CS003'},
+      {id:'S4',name:'Karan Shah',roll:'21CS004'},
+      {id:'S5',name:'Priya Nair',roll:'21CS005'},
+    ],
+    faculty:[
+      {id:'F1',name:'Dr. S. Rao'},
+      {id:'F2',name:'Prof. A. Mehta'},
+    ],
+    subjects:[
+      {id:'SB1',name:'Software Engineering',code:'CS301',facultyId:'F1'},
+      {id:'SB2',name:'Database Systems',code:'CS302',facultyId:'F2'},
+      {id:'SB3',name:'Computer Networks',code:'CS303',facultyId:'F1'},
+    ],
+    sessions:[],       // {id, subjectId, date}
+    attendance:[],      // {sessionId, studentId, status:'present'|'absent'}
+    users:[
+      {username:'admin',password:'admin123',role:'admin',name:'System Admin'},
+      {username:'rao',password:'faculty123',role:'faculty',name:'Dr. S. Rao',facultyId:'F1'},
+      {username:'mehta',password:'faculty123',role:'faculty',name:'Prof. A. Mehta',facultyId:'F2'},
+      {username:'aisha',password:'student123',role:'student',name:'Aisha Khan',studentId:'S1'},
+    ]
+  };
+}
+
+let db = JSON.parse(localStorage.getItem(KEY) || 'null') || seed();
+function save(){ localStorage.setItem(KEY, JSON.stringify(db)); }
+save();
+
+let session = { user:null };
+const uid = p => p+Math.random().toString(36).slice(2,8);
+
+/* ---------------- Login ---------------- */
+let activeRole='admin';
+const hints={
+  admin:'<b>admin</b> / admin123',
+  faculty:'<b>rao</b> / faculty123 &nbsp;or&nbsp; <b>mehta</b> / faculty123',
+  student:'<b>aisha</b> / student123'
+};
+function renderHint(){ document.getElementById('loginHint').innerHTML='Demo login — '+hints[activeRole]; }
+renderHint();
+
+document.getElementById('roleTabs').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...document.querySelectorAll('#roleTabs button')].forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); activeRole=b.dataset.role; renderHint();
+  document.getElementById('loginErr').style.display='none';
+});
+
+function doLogin(){
+  const u=document.getElementById('userIn').value.trim().toLowerCase();
+  const p=document.getElementById('passIn').value;
+  const found=db.users.find(x=>x.username===u && x.password===p && x.role===activeRole);
+  if(!found){ document.getElementById('loginErr').style.display='block'; return; }
+  session.user=found;
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').classList.add('on');
+  document.getElementById('whoName').textContent=found.name;
+  document.getElementById('whoRole').textContent=found.role;
+  buildNav();
+}
+document.getElementById('loginBtn').addEventListener('click',doLogin);
+document.getElementById('passIn').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('logoutBtn').addEventListener('click',()=>{
+  session.user=null;
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('login').style.display='flex';
+  document.getElementById('userIn').value=''; document.getElementById('passIn').value='';
+});
+
+/* ---------------- Nav / routing ---------------- */
+const NAVS={
+  admin:[['overview','Overview'],['students','Students'],['faculty','Faculty'],['subjects','Subjects & courses']],
+  faculty:[['session','Take attendance'],['history','Session history']],
+  student:[['myattendance','My attendance'],['myhistory','Session history']]
+};
+let currentPage=null;
+
+function buildNav(){
+  const role=session.user.role;
+  const nav=document.getElementById('sideNav'); nav.innerHTML='';
+  NAVS[role].forEach(([key,label],i)=>{
+    const b=document.createElement('button');
+    b.textContent=label; b.dataset.key=key;
+    if(i===0) b.classList.add('active');
+    b.addEventListener('click',()=>{
+      [...nav.children].forEach(x=>x.classList.remove('active'));
+      b.classList.add('active'); render(key);
+    });
+    nav.appendChild(b);
+  });
+  render(NAVS[role][0][0]);
+}
+
+function render(key){
+  currentPage=key;
+  const role=session.user.role;
+  if(role==='admin') renderAdmin(key);
+  if(role==='faculty') renderFaculty(key);
+  if(role==='student') renderStudent(key);
+}
+
+/* ---------------- Helpers ---------------- */
+function subjPct(subjectId, studentId){
+  const sess=db.sessions.filter(s=>s.subjectId===subjectId);
+  if(!sess.length) return null;
+  let present=0;
+  sess.forEach(s=>{
+    const rec=db.attendance.find(a=>a.sessionId===s.id && a.studentId===studentId);
+    if(rec && rec.status==='present') present++;
+  });
+  return {present, total:sess.length, pct:Math.round(present/sess.length*100)};
+}
+function overallPct(studentId){
+  const sess=db.sessions;
+  if(!sess.length) return null;
+  let present=0;
+  sess.forEach(s=>{
+    const rec=db.attendance.find(a=>a.sessionId===s.id && a.studentId===studentId);
+    if(rec && rec.status==='present') present++;
+  });
+  return Math.round(present/sess.length*100);
+}
+function esc(s){ return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+/* ---------------- Admin views ---------------- */
+function renderAdmin(key){
+  const m=document.getElementById('main');
+  if(key==='overview'){
+    m.innerHTML=`
+      <div class="pagehead"><h2>Overview</h2><p>Institution-wide snapshot of the attendance system.</p></div>
+      <div class="grid-stats">
+        <div class="stat"><div class="num">${db.students.length}</div><div class="lbl">Students</div></div>
+        <div class="stat"><div class="num">${db.faculty.length}</div><div class="lbl">Faculty</div></div>
+        <div class="stat"><div class="num">${db.subjects.length}</div><div class="lbl">Subjects</div></div>
+        <div class="stat"><div class="num">${db.sessions.length}</div><div class="lbl">Sessions recorded</div></div>
+      </div>
+      <div class="card"><h3>Subject-wise average attendance</h3>${subjectAverages()}</div>`;
+    return;
+  }
+  if(key==='students'){
+    m.innerHTML=`
+      <div class="pagehead"><h2>Students</h2><p>Add, view and remove student records.</p></div>
+      <div class="card">
+        <h3>Add a student</h3>
+        <div class="row-form">
+          <input id="stuName" placeholder="Full name">
+          <input id="stuRoll" placeholder="Roll number">
+          <button class="btn" id="addStu">Add student</button>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Roll no.</th><th>Overall %</th><th></th></tr></thead>
+        <tbody>${db.students.map(s=>{
+          const p=overallPct(s.id);
+          return `<tr><td>${esc(s.name)}</td><td class="muted">${esc(s.roll)}</td><td>${p===null?'<span class="muted">—</span>':p+'%'}</td>
+          <td><button class="btn ghost small" data-del-stu="${s.id}">Remove</button></td></tr>`;
+        }).join('') || `<tr><td colspan="4" class="empty">No students yet — add one above.</td></tr>`}</tbody></table></div>
+      </div>`;
+    document.getElementById('addStu').addEventListener('click',()=>{
+      const name=document.getElementById('stuName').value.trim();
+      const roll=document.getElementById('stuRoll').value.trim();
+      if(!name||!roll) return;
+      db.students.push({id:uid('S'),name,roll}); save(); renderAdmin('students');
+    });
+    m.querySelectorAll('[data-del-stu]').forEach(b=>b.addEventListener('click',()=>{
+      db.students=db.students.filter(s=>s.id!==b.dataset.delStu);
+      db.attendance=db.attendance.filter(a=>a.studentId!==b.dataset.delStu);
+      save(); renderAdmin('students');
+    }));
+    return;
+  }
+  if(key==='faculty'){
+    m.innerHTML=`
+      <div class="pagehead"><h2>Faculty</h2><p>Add, view and remove faculty records.</p></div>
+      <div class="card">
+        <h3>Add a faculty member</h3>
+        <div class="row-form">
+          <input id="facName" placeholder="Full name">
+          <button class="btn" id="addFac">Add faculty</button>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Subjects taught</th><th></th></tr></thead>
+        <tbody>${db.faculty.map(f=>{
+          const subs=db.subjects.filter(s=>s.facultyId===f.id).map(s=>s.name).join(', ')||'—';
+          return `<tr><td>${esc(f.name)}</td><td class="muted">${esc(subs)}</td>
+          <td><button class="btn ghost small" data-del-fac="${f.id}">Remove</button></td></tr>`;
+        }).join('') || `<tr><td colspan="3" class="empty">No faculty yet — add one above.</td></tr>`}</tbody></table></div>
+      </div>`;
+    document.getElementById('addFac').addEventListener('click',()=>{
+      const name=document.getElementById('facName').value.trim();
+      if(!name) return;
+      db.faculty.push({id:uid('F'),name}); save(); renderAdmin('faculty');
+    });
+    m.querySelectorAll('[data-del-fac]').forEach(b=>b.addEventListener('click',()=>{
+      db.faculty=db.faculty.filter(f=>f.id!==b.dataset.delFac);
+      save(); renderAdmin('faculty');
+    }));
+    return;
+  }
+  if(key==='subjects'){
+    const facOpts=db.faculty.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join('');
+    m.innerHTML=`
+      <div class="pagehead"><h2>Subjects & courses</h2><p>Define what attendance is tracked against.</p></div>
+      <div class="card">
+        <h3>Add a subject</h3>
+        <div class="row-form">
+          <input id="subName" placeholder="Subject name">
+          <input id="subCode" placeholder="Subject code">
+          <select id="subFac"><option value="">Assign faculty…</option>${facOpts}</select>
+          <button class="btn" id="addSub">Add subject</button>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Subject</th><th>Code</th><th>Faculty</th><th>Sessions held</th><th></th></tr></thead>
+        <tbody>${db.subjects.map(s=>{
+          const fac=db.faculty.find(f=>f.id===s.facultyId);
+          const cnt=db.sessions.filter(x=>x.subjectId===s.id).length;
+          return `<tr><td>${esc(s.name)}</td><td class="muted">${esc(s.code)}</td><td>${fac?esc(fac.name):'<span class="muted">Unassigned</span>'}</td><td>${cnt}</td>
+          <td><button class="btn ghost small" data-del-sub="${s.id}">Remove</button></td></tr>`;
+        }).join('') || `<tr><td colspan="5" class="empty">No subjects yet — add one above.</td></tr>`}</tbody></table></div>
+      </div>`;
+    document.getElementById('addSub').addEventListener('click',()=>{
+      const name=document.getElementById('subName').value.trim();
+      const code=document.getElementById('subCode').value.trim();
+      const facultyId=document.getElementById('subFac').value||null;
+      if(!name||!code) return;
+      db.subjects.push({id:uid('SB'),name,code,facultyId}); save(); renderAdmin('subjects');
+    });
+    m.querySelectorAll('[data-del-sub]').forEach(b=>b.addEventListener('click',()=>{
+      const id=b.dataset.delSub;
+      db.subjects=db.subjects.filter(s=>s.id!==id);
+      const deadSessions=db.sessions.filter(s=>s.subjectId===id).map(s=>s.id);
+      db.sessions=db.sessions.filter(s=>s.subjectId!==id);
+      db.attendance=db.attendance.filter(a=>!deadSessions.includes(a.sessionId));
+      save(); renderAdmin('subjects');
+    }));
+    return;
+  }
+}
+function subjectAverages(){
+  if(!db.subjects.length) return `<div class="empty">No subjects defined yet.</div>`;
+  return db.subjects.map(s=>{
+    const sess=db.sessions.filter(x=>x.subjectId===s.id);
+    let pct=0;
+    if(sess.length && db.students.length){
+      let sum=0;
+      db.students.forEach(st=>{ const p=subjPct(s.id,st.id); if(p) sum+=p.pct; });
+      pct=Math.round(sum/db.students.length);
+    }
+    return `<div class="subj-line"><div class="sname">${esc(s.name)}</div>
+      <div class="bar-outer" style="flex:1"><div class="bar-inner${pct<75?' low':''}" style="width:${pct}%"></div></div>
+      <div class="pct">${sess.length?pct+'%':'—'}</div></div>`;
+  }).join('');
+}
+
+/* ---------------- Faculty views ---------------- */
+function renderFaculty(key){
+  const m=document.getElementById('main');
+  const facId=session.user.facultyId;
+  const mySubs=db.subjects.filter(s=>s.facultyId===facId);
+
+  if(key==='session'){
+    if(!mySubs.length){ m.innerHTML=`<div class="pagehead"><h2>Take attendance</h2></div><div class="card empty">No subjects are assigned to you yet — ask an admin to assign one.</div>`; return; }
+    m.innerHTML=`
+      <div class="pagehead"><h2>Take attendance</h2><p>Open a session for today and mark each student.</p></div>
+      <div class="card">
+        <div class="row-form">
+          <select id="facSubj">${mySubs.map(s=>`<option value="${s.id}">${esc(s.name)} (${esc(s.code)})</option>`).join('')}</select>
+          <input id="facDate" type="date" value="${new Date().toISOString().slice(0,10)}">
+          <button class="btn" id="openSess">Open session</button>
+        </div>
+        <div id="markArea"></div>
+        <button class="btn" id="saveSess" style="margin-top:14px;display:none">Save attendance</button>
+      </div>`;
+    let statusMap={};
+    function paintMark(){
+      const area=document.getElementById('markArea');
+      area.innerHTML = db.students.map(s=>`
+        <div class="mark-row">
+          <div><div class="stu">${esc(s.name)}</div><div class="roll">${esc(s.roll)}</div></div>
+          <div class="toggle" data-stu="${s.id}">
+            <button data-set="present" class="${statusMap[s.id]==='present'?'p-on':''}">Present</button>
+            <button data-set="absent" class="${statusMap[s.id]==='absent'?'a-on':''}">Absent</button>
+          </div>
+        </div>`).join('') || `<div class="empty">No students to mark.</div>`;
+      area.querySelectorAll('.toggle').forEach(t=>{
+        t.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
+          statusMap[t.dataset.stu]=btn.dataset.set; paintMark();
+        }));
+      });
+    }
+    document.getElementById('openSess').addEventListener('click',()=>{
+      statusMap={}; db.students.forEach(s=>statusMap[s.id]='present');
+      paintMark();
+      document.getElementById('saveSess').style.display='inline-block';
+    });
+    document.getElementById('saveSess').addEventListener('click',()=>{
+      const subjectId=document.getElementById('facSubj').value;
+      const date=document.getElementById('facDate').value;
+      const sessionRec={id:uid('SE'),subjectId,date};
+      db.sessions.push(sessionRec);
+      db.students.forEach(s=>db.attendance.push({sessionId:sessionRec.id,studentId:s.id,status:statusMap[s.id]||'absent'}));
+      save();
+      document.getElementById('saveSess').style.display='none';
+      document.getElementById('markArea').innerHTML=`<div class="empty">Session saved for ${esc(date)}. Open a new one whenever you like.</div>`;
+    });
+    return;
+  }
+  if(key==='history'){
+    const sess=db.sessions.filter(s=>mySubs.some(x=>x.id===s.subjectId)).sort((a,b)=>b.date.localeCompare(a.date));
+    m.innerHTML=`
+      <div class="pagehead"><h2>Session history</h2><p>Every session you've opened, most recent first.</p></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Subject</th><th>Present</th><th>Absent</th></tr></thead>
+      <tbody>${sess.map(s=>{
+        const recs=db.attendance.filter(a=>a.sessionId===s.id);
+        const pres=recs.filter(r=>r.status==='present').length;
+        const subj=db.subjects.find(x=>x.id===s.subjectId);
+        return `<tr><td>${esc(s.date)}</td><td>${esc(subj?subj.name:'—')}</td><td><span class="pill present">${pres}</span></td><td><span class="pill absent">${recs.length-pres}</span></td></tr>`;
+      }).join('') || `<tr><td colspan="4" class="empty">No sessions recorded yet.</td></tr>`}</tbody></table></div></div>`;
+    return;
+  }
+}
+
+/* ---------------- Student views ---------------- */
+function renderStudent(key){
+  const m=document.getElementById('main');
+  const stuId=session.user.studentId;
+  const overall=overallPct(stuId);
+
+  if(key==='myattendance'){
+    m.innerHTML=`
+      <div class="pagehead"><h2>My attendance</h2><p>Your standing across every subject, updated after each session.</p></div>
+      <div class="grid-stats">
+        <div class="stat"><div class="num">${overall===null?'—':overall+'%'}</div><div class="lbl">Overall attendance</div></div>
+        <div class="stat"><div class="num">${db.subjects.length}</div><div class="lbl">Subjects enrolled</div></div>
+      </div>
+      <div class="card"><h3>Subject-wise</h3>${
+        db.subjects.map(s=>{
+          const p=subjPct(s.id,stuId);
+          const pct=p?p.pct:0;
+          return `<div class="subj-line"><div class="sname">${esc(s.name)}</div>
+            <div class="bar-outer" style="flex:1"><div class="bar-inner${pct<75?' low':''}" style="width:${pct}%"></div></div>
+            <div class="pct">${p?p.pct+'%':'—'}</div></div>`;
+        }).join('') || `<div class="empty">No subjects defined yet.</div>`
+      }</div>
+      ${overall!==null && overall<75 ? `<div class="card" style="border-color:var(--clay)"><h3 style="color:var(--clay)">Below the 75% line</h3><p class="muted" style="margin:0">Your overall attendance is under the usual minimum. Talk to your faculty advisor if you think a session was marked incorrectly.</p></div>` : ''}
+      `;
+    return;
+  }
+  if(key==='myhistory'){
+    const rows=db.attendance.filter(a=>a.studentId===stuId).map(a=>{
+      const s=db.sessions.find(x=>x.id===a.sessionId);
+      const subj=s?db.subjects.find(x=>x.id===s.subjectId):null;
+      return {date:s?s.date:'', subj:subj?subj.name:'—', status:a.status};
+    }).sort((a,b)=>b.date.localeCompare(a.date));
+    m.innerHTML=`
+      <div class="pagehead"><h2>Session history</h2><p>Every recorded session involving you.</p></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Subject</th><th>Status</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.subj)}</td><td><span class="pill ${r.status}">${r.status==='present'?'Present':'Absent'}</span></td></tr>`).join('') || `<tr><td colspan="3" class="empty">No sessions recorded yet.</td></tr>`}</tbody></table></div></div>`;
+    return;
+  }
+}
+</script>
+</body>
+</html>
